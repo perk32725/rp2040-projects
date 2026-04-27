@@ -8,7 +8,7 @@ I started this project after watching the Life with David series 'Raspberry Pi P
 David's series is excellant for showing how to set up your environment.
 I also snagged a lot of his github files to play with.
 
-One of my goals was to set up a runtime environment that I could put into FLASH and have available for other projects, without having to constantly wear down the FLASH while I was developing and playing.  The idea here was to use a picoprobe to download programs that I was working on straight into RAM while I did the development work.
+One of my goals was to set up a runtime environment that I could put into FLASH and have available for other projects, without having to constantly wear down the FLASH while I was developing and playing.  What I wanted to do was use a picoprobe to download programs that I was working on straight into RAM while I did the development work.
 
 I spent a lot of time with whatever Google AI was available, and created a potentially useful runtime environment using the SDK.  But that is another project, another time.
 
