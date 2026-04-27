@@ -8,3 +8,4 @@
 *.swo
 include_files/
 extended-README.txt
+build/
