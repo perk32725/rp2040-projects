@@ -1,0 +1,8 @@
+.gdbinit
+.gitignore
+*.o
+*.dis
+*.elf
+*.map
+*.swp
+*.swo
