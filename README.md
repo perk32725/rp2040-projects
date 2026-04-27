@@ -12,7 +12,7 @@ One of my goals was to set up a runtime environment that I could put into FLASH 
 
 I spent a lot of time with whatever Google AI was available, and created a potentially useful runtime environment using the SDK.  I include it here, and I will fill in more info later; right now I am concentrating on the basic project.
 
-I liked what David did with his videos, and how he taught many aspects of how to program the Pi Pico and the RP2040 in really down-and-dirty, bare-metal, no-SDK, using the GNU compiler and an editor.
+I liked what David did with his videos, and how he taught many aspects of how to program the Pi Pico and the RP2040 in really down-and-dirty, bare-metal, no-SDK programming, using the GNU compiler and an editor.
 I'm a Mac guy, so I get to use vim, gdb, minicom, and ttys to get things done, along with an RP2350 Geeek used as a probe, a breadboard, a resister and LED, and jumper wires.
 
 **sdk-runtime** is a Swiss-Army knife for all the Pico goodies in the SDK
