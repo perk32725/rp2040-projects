@@ -30,11 +30,11 @@ I'm a Mac guy, so I get to use vim, gdb, minicom, and ttys to get things done, a
     I only have Pico-W's, and I haven't (yet) gotten around to figuring out the LED on the Pico-W in assembly language.
 
   The input loop recognizes a few basic commands:
-    dw (dump word)
-    di (dump integers or half-words)
-    db (dump bytes)
-    show c(onfig)
-    show g(pio)
+    - dw (dump word)
+    - di (dump integers or half-words)
+    - db (dump bytes)
+    - show c(onfig)
+    - show g(pio)
 
   dw, di, and db all expect arguments in the form:
     dx 0xaaaaaaaa nnn
