@@ -10,7 +10,7 @@ I also snagged a lot of his github files to play with.
 
 One of my goals was to set up a runtime environment that I could put into FLASH and have available for other projects, without having to constantly wear down the FLASH while I was developing and playing.  What I wanted to do was use a picoprobe to download programs that I was working on straight into RAM while I did the development work.
 
-I spent a lot of time with whatever Google AI was available, and created a potentially useful runtime environment using the SDK.  But that is another project, another time.
+I spent a lot of time with whatever Google AI was available, and created a potentially useful runtime environment using the SDK.  I include it here, and I will fill in more info later; right now I am concentrating on the basic project.
 
 I liked what David did with his videos, and how he taught many aspects of how to program the Pi Pico and the RP2040 in really down-and-dirty, bare-metal, no-SDK, using the GNU compiler and an editor.
 I'm a Mac guy, so I get to use vim, gdb, minicom, and ttys to get things done, along with an RP2350 Geeek used as a probe, a breadboard, a resister, and LED, and jumper wires.
