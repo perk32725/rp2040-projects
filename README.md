@@ -19,7 +19,7 @@ I'm a Mac guy, so I get to use vim, gdb, minicom, and ttys to get things done, a
 
 **sdk-prj1** is a basic TTY and flasher program for the Pico-W; example code shows how to connect to your local wireless, get the current time, and a few other bits and pieces.
 
-**basic-runtime** follows the "Life with David" series on RP2040 bare-metal-assembly programming, setting up the clocks, GPIO, and provides setup routines for uart0 or uart1 used by the **basic-tty** project.
+**basic-runtime** follows the "Life with David" series on RP2040 bare-metal-assembly programming, setting up the clocks, GPIO, copies the vector table to low RAM (0x20000000), provides setup routines for uart0 and uart1 used in the **basic-tty** project, and then jumps off a cliff to 0x20000100, where you hopefully have something for the cpu to do.
 
 **basic-tty** is a basic flasher program that demonstrates a few things:
   - it modifies the vector table for UART input,
@@ -27,13 +27,14 @@ I'm a Mac guy, so I get to use vim, gdb, minicom, and ttys to get things done, a
   - it goes into a forever loop waiting for input.
   - While it's waiting, it toggles GPIO2 at 3 Hz, with a 25% (or so) duty cycle.
     Why GPIO2 instead of GPIO25 like everyone else?
-    I only have Pico-W's, and I haven't (yet) gotten around to figuring out the LED on the Pico-W.
+    I only have Pico-W's, and I haven't (yet) gotten around to figuring out the LED on the Pico-W in assembly language.
 
   The input loop recognizes a few basic commands:
     dw (dump word)
     di (dump integers or half-words)
     db (dump bytes)
     show c(onfig)
+    show g(pio)
 
   dw, di, and db all expect arguments in the form:
     dx 0xaaaaaaaa nnn
@@ -43,6 +44,8 @@ I'm a Mac guy, so I get to use vim, gdb, minicom, and ttys to get things done, a
 
   The address is checked against an internal table of valid memory ranges, and if the starting address is valid, it will dump contents until the end of the given range or you run out of valid locations.
 
-  'show s' takes no arguments, and just displays a few sections of the system register.  It is left as an exercise for the student to break down the bits of the system register and display them.
+  'show c' takes no arguments, and just displays a few sections of the system configuration register.  It is left as an exercise for the student to break down the bits of the system register and display them.
+
+  'show g' nn shows the configuration and status register for a given GPIO (0-31)
 
 Enjoy!
