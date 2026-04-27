@@ -1,7 +1,7 @@
 # rp2040-projects
 SDK and Non-SDK projects with the Raspberry Pi Pico
 
-**sdk-runtime** is a Swiss-Army knife for all the goodies in the SDK
+**sdk-runtime** is a Swiss-Army knife for all the Pico goodies in the SDK
 
 **sdk-prj1** is a basic TTY and flasher program for the Pico-W; example code shows how to connect to your local wireless, get the current time, and a few other bits and pieces.
 
