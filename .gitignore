@@ -6,3 +6,5 @@
 *.map
 *.swp
 *.swo
+include_files/
+extended-README.txt
