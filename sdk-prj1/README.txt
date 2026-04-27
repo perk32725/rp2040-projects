@@ -38,7 +38,7 @@
 
 # alias picodb=/Applications/ARMGnuToolchain/15.2.rel1/arm-none-eabi/bin/arm-none-eabi-gdb
 
-#export PICO_TOOLCHAIN_PATH="/Applications/ARMGnuToolchain/15.2.rel1/arm-none-eabi"
+# export PICO_TOOLCHAIN_PATH="/Applications/ARMGnuToolchain/15.2.rel1/arm-none-eabi"
 # alias picodb="$PICO_TOOLCHAIN_PATH/bin/arm-none-eabi-gdb"
 # using SDK:
 #   cd to the project directory, and run:
@@ -62,7 +62,7 @@ disassemble start,end
 (gdb) x/10i start
 
 # dump memory:
-(gdb) x/4xw 0x10000100  # show what should be vectory table
+(gdb) x/4xw 0x10000100  # show what should be vector table
 (gdb) x/8i  0x20000000  # disassemble start of RAM
 (gdb) x/8i  0x10000000  # disassemble boot2
 (gdb) x/8c  0x20000000  # display 8 characters
