@@ -363,6 +363,8 @@ null_pgm:
     bl  prt_string
     b   hex_done        // done
 
+.ltorg
+
 .include "input-routines.s"
 
 .include "dump-routines.s"
@@ -465,40 +467,81 @@ show_ctrl_reg:
 
     mov     r1, #31
     and     r0, r1      // just the low 5 bits
-    mov     r1, #10     // 10's will land in r2, 1's in r3
+    mov     r1, #10     // 10's will land in r0, 1's in r1
 
-    bl      great_divide
+    bl      intDivide
 
 wait_here:
-    mov     r0, r2      // grab quotient
     add     r0, #'0'
     bl      uart_out    // 0-3
 
-    mov     r0, r3      // grab remainder
+    mov     r0, r1      // grab remainder
     add     r0, #'0'
     bl      uart_out    // 0-9
 
     mov     r0, #0x0a
     bl      uart_out    // NL
+    bl      uart_out    // NL
 
+// demo stuff:
     mov     r0, #9
-    ldr     r1, =decout_buffer
-    ldr     r2, =decout_ptr
-    str     r1, [r2]
+    bl      demo_dec    // say 'Number 9'
 
-    bl      reg2dec
+    mov     r0, #0
+    sub     r0, #1
+    lsr     r0, #1
+    bl      demo_dec    // show max positive integer
 
-    mov     r0, #0xff
-    add     r0, #1
-    lsl     r0, #2
-    ldr     r1, =decout_buffer
-    ldr     r2, =decout_ptr
-    str     r1, [r2]
+    mov     r0, #1
+    lsl     r0, #31
+    bl      demo_dec    // show max negative integer
 
-    bl      reg2dec
+    mov     r0, #0
+    sub     r0, #1
+    bl      demo_dec    // show -1
 
 show_ctrl_don:
     pop     {r1-r4, pc}
+
+// -----------------------------------------------------------------------------
+// demo_dec:
+// -----------------------------------------------------------------------------
+demo_dec:
+    push    {r0,r1,r7, lr}
+    mov     r7, r0
+    ldr     r1, =decout_buffer
+
+    ldr     r0, =demomsg_0
+    bl      prt_string
+
+    mov     r0, r7
+    bl      hexoutw     // print reg in hex
+
+    mov     r0, #' '
+    bl      uart_out
+
+    mov     r0, r7
+    ldr     r1, =decout_buffer
+    bl      sreg2dec
+
+    mov     r0, r1
+    bl      prt_string  // print reg in signed decimal
+
+    mov     r0, #' '
+    bl      uart_out
+
+    mov     r0, r7
+    ldr     r1, =decout_buffer
+    bl      ureg2dec
+
+    mov     r0, r1
+    bl      prt_string  // print reg in unsigned decimal
+
+    mov     r0, #0x0a
+    bl      uart_out    // NL
+    bl      uart_out    // NL
+
+    pop     {r0,r1,r7, pc}
 
 // -----------------------------------------------------------------------------
 // DATA
@@ -562,6 +605,8 @@ OUTTOPAD_msg:     .asciz "OUTTOPAD set, "
 OUTFROMPERI_msg:  .asciz "OUTFROMPERI set"
 
 gctrl_msg:        .asciz "\nFunction: "
+
+demomsg_0:        .asciz "hex:     dec:        unsigned:\n"
 
 .align 4    // balance out the data
 
