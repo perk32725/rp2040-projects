@@ -396,108 +396,111 @@ ready2:
     pop     {r1,r2,pc}  // done here
 
 //------------------------------------------------
-// great_divide()
-//------------------------------------------------
-.global great_divide
-.type great_divide, %function
-.thumb_func
-
-great_divide:
-// using the SIO divide:
+// intDivide:
 // entry:
 //   r0 = dividend
 //   r1 = divisor
 // exit:
-//   r2 = quotient
-//   r3 = remainder
-
-    push    {r4}
-
-    ldr     r4, =sio_base   // where the fancy stuff is
-    str     r0, [r4, #0x60] // divdividend
-    str     r1, [r4, #0x64] // divdivisor
-
-    mov r2, #1              // ready mask
-waiting:
-    ldr r3, [r4, #0x78]     // divstatus
-    and r3, r2
-    beq waiting
-
-    ldr r3, [r4, #0x74]     // divremainder: remainder first
-    ldr r2, [r4, #0x70]     // divquotient:  quotient
-
-    pop {r4}
-    bx  lr                  // and we're done
-
+//   r0 = quotient
+//   r1 = remainder
 //------------------------------------------------
-// reg2dec()
-//------------------------------------------------
-.global reg2dec
-.type reg2dec, %function
+.global intDivide
+.type intDivide, %function
 .thumb_func
 
-reg2dec:
+.macro div_delay    // delay 8 cycles
+    b 1f
+1:  b 1f
+1:  b 1f
+1:  b 1f
+1:
+.endm
+
+intDivide:
+    push    {r2}
+    ldr     r2, =sio_base
+    str     r0, [r2, #0x60] // dividend
+    str     r1, [r2, #0x64] // divisor
+    div_delay               // 8-cycle delay
+    ldr     r1, [r2, #0x74] // remainder
+    ldr     r0, [r2, #0x70] // quotient
+    pop     {r2}
+    bx      lr
+// 13 instructions
+
+//------------------------------------------------------------------------
+// reg2dec
 // entry:
-//   r0 = reg
-//   r1 = outbuffer
+//   r0 = number to convert
+//   r1 = ptr to output buffer
 // exit:
-//   r1 updated to outbuffer + n, 0-trailer
+//   r1 = ptr to output buffer
+//
+// improved from "RP2040 Assembly Language Programming" by Stephen Smith
+// call ureg2dec for unsigned output
+// call sreg2dec for nsigned output
+//------------------------------------------------------------------------
+.global ureg2dec
+.type   ureg2dec, %function
+.thumb_func
 
-    push {r2-r7, lr}
-    mov  r4, r1             // save outptr
-    mov  r5, #10            // start with divisor of 10
-    mov  r6, r0             // save dividend in r6
-    mov  r7, #0             // null char
+ureg2dec:
+    push    {r1,r4,r6,r7, lr}
+    mov     r6, r1      // r6 gets buffer ptr
+    mov     r4, r1      // r4 gets buffer ptr too
+    mov     r7, #0      // flag
+    b       cvt_digits  // we're doing unsigned
 
-find_divisor:
-    mov  r0, r6             // current dividend
-    mov  r1, r5             // current divisor
-    bl   great_divide
+.global sreg2dec
+.type   sreg2dec, %function
+.thumb_func
 
-    cmp  r2, #0             // is the quotient zero?
-    beq  r2do_rem           // examine remainder in r3
+sreg2dec:
+    push    {r1,r4,r6,r7, lr}
+    mov     r6, r1      // r6 gets buffer ptr
+    mov     r4, r1      // r4 gets buffer ptr too
+    mov     r7, #0      // flag
 
-    cmp  r2, #10            // quotient >9?
-    blt  found_divisor      // if not, we're here...
+    cmp     r0, #0      // check sign
+    bpl     cvt_digits
 
-// divisor *= 10:
-DIVx10:
-    lsl  r3, r5, #2         // mult divisor by 4, put in r3
-    add  r3, r5             // add divisor to r3 (divisor * 5)
-    lsl  r5, r3, #1         // mult by 2 and put new divisor in r5
-    b    find_divisor
+    mov     r7, #1      // say it's negative
+    neg     r0, r0      // and negate the number
 
-found_divisor:
-    mov  r0, r6             // dividend
-    mov  r1, r5             // divisor
-    orr  r0, r1
-    beq  r2done
+cvt_digits:
+    mov     r1, #10
+    bl      intDivide
 
-    mov  r0, r6             // dividend
-    bl   great_divide
+    add     r1, #'0'    // spit out remainder
+    strb    r1, [r4]
+    add     r4, #1
 
-    add  r2, #'0'           // quotient
-    strb r2, [r4]
-    add  r4, #1
-    strb r7, [r4]           // put into decout_buffer
+    cmp     r0, #0
+    bne     cvt_digits  // not done yet
 
-    mov  r6, r3             // put remainder now dividend
+    cmp     r7, #0      // was it negative?
+    beq     was_pos
 
-    mov  r0, r5             // current divisor
-    mov  r1, #10            // we want to divide the divisor by 10
-    bl   great_divide
+    mov     r0, #'-'    // put a minus sign in the output
+    strb    r0, [r4]
+    add     r4, #1
 
-    mov  r5, r2             // that quotient goes to new divisor
-    b    found_divisor      // and go around again
+was_pos:
+    mov     r0, #0
+    strb    r0, [r4]    // nul terminate
+    sub     r4, #1
+    sub     r2, r4, r6  // buffer link in r2
 
-r2do_rem:
-    add  r3, #'0'
-    strb r3, [r4]
-    add  r4, #1
-    strb r7, [r4]
+revloop:
+    ldrb    r0, [r4]
+    ldrb    r3, [r6]
+    strb    r0, [r6]
+    strb    r3, [r4]    // swap
+    sub     r4, #1      // move back
+    add     r6, #1      // move up
+    sub     r2, #2      // count
+    bpl     revloop     // swap some more
 
-r2done:
-    mov r1, r4
-    pop {r2-r7, pc}
+    pop     {r1,r4,r6,r7,pc}
 
 // EOF:
