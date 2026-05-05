@@ -5,6 +5,7 @@ MACH=cortex-m0plus
 CC=${PICO_COMPILER} #arm-none-eabi-gcc
 DIS=${PICO_TOOLCHAIN_PATH}/bin/arm-none-eabi-objdump
 CFLAGS= -c -g -mcpu=$(MACH) -mthumb -std=gnu11 -Wall -O0
+#CFLAGS= -c -g3 -Wa,-g -Wa,--gdwarf-sections -mcpu=$(MACH) -mthumb -std=gnu11 -Wall -O0
 LFLAGS= -nostdlib -T basic-runtime.ld -Wl,-Map=basic-runtime.map
 
 all: basic-runtime.elf
