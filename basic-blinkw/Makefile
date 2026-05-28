@@ -17,8 +17,9 @@ LFLAGS= -nostdlib -T main.ld  -Wl,--just-symbols=../basic-runtime/basic-runtime.
 #all: main0.elf main1.elf
 all: main.elf
 
-main.o: picow-led.s
-	$(CC) $(CFLAGS) -o $@ picow-led.s
+#main.o: picow-led.s
+main.o: picow-led-4.S
+	$(CC) $(CFLAGS) -o $@ picow-led-4.S
 
 # --- main:
 main.elf: main.o
