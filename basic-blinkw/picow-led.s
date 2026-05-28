@@ -149,32 +149,41 @@ sync_thing:
     bl  check_spi_status
 
 check_r0_here:
-    ldr r1, =SIO_BASE
-    ldr r2, =GP25_CS
-    str r2, [r1, #ACLR]     // CS low (0x18 is GPIO_OUT_CLR)
+//    ldr r1, =SIO_BASE
+//    ldr r2, =GP25_CS
+//    str r2, [r1, #ACLR]     // CS low (0x18 is GPIO_OUT_CLR)
+//
+//    ldr r0, =0x0000b04c
+//    bl  shift_out_32
+//
+//    ldr r0, =0x000204b3
+//    bl  shift_out_32
+//
+//    str r2, [r1, #ASET]     // CS high (0x14 is GPIO_OUT_SET)
+    bl  init_spi_config
 
-    ldr r0, =0x0000b04c
-    bl  shift_out_32
-
-    ldr r0, =0x000204b3
-    bl  shift_out_32
-
-    str r2, [r1, #ASET]     // CS high (0x14 is GPIO_OUT_SET)
-
-    ldr r1, =SIO_BASE
-    str r2, [r1, #ACLR]     // 0x18 is GPIO_OUT_CLR)
+//    ldr r1, =SIO_BASE
+    str r2, [r1, #ACLR]     // CS low
 
     ldr r0, =0x900c8804
     bl  shift_out_32
 
     ldr r3, =GP29_CLK
     str r3, [r1, #ASET]     // 0x14 is GPIO_OUT_SET
+    nop
+    nop
+    nop
+    nop
     str r3, [r1, #ACLR]     // 0x18 is GPIO_OUT_SET
+    nop
+    nop
+    nop
+    nop
 
     ldr r0, =0x01000000
     bl  shift_out_32
 
-    str r2, [r1, #ASET]     // 0x14 is GPIO_OUT_SET
+    str r2, [r1, #ASET]     // CS high
 
 spi_success:
     // 6. Enable LED Output
@@ -202,28 +211,31 @@ led_off:
     b   main_loop
 
 // --- Subroutines ---
-
+// r0 = command
+// r1 = data
 write_register:
-    push {r4, lr}
-    mov r4, r1
+    push {lr}
+    mov r5, r1          // save data
+
     ldr r1, =SIO_BASE
     ldr r2, =GP25_CS
-    str r2, [r1, #ACLR]        // CS Low
-    
-    bl  shift_out_32           // Send Command
+    str r2, [r1, #ACLR] // CS Low
+
+    bl  shift_out_32    // Send Command in r0
 
     // Mandatory Turnaround Cycle
-    ldr r3, =GP29_CLK
-    str r3, [r1, #ASET]        // Clock High
+    ldr r4, =GP29_CLK
+    str r4, [r1, #ASET] // Clock High
     nop
-    str r3, [r1, #ACLR]        // Clock Low
+    str r4, [r1, #ACLR] // Clock Low
+    nop
 
-    mov r0, r4
-    bl  shift_out_32           // Send Data
-    
-    ldr r2, =GP25_CS
-    str r2, [r1, #ASET]        // CS High
-    pop {r4, pc}
+    mov r0, r5          // get the data back
+    bl  shift_out_32    // Send Data
+
+    str r2, [r1, #ASET] // CS High
+
+    pop {pc}
 
 //-------------------------------------------------------------
 // set r1 to SIO_BASE
@@ -243,6 +255,7 @@ write_transaction:
     pop {pc}
 
 //-------------------------------------------------------------
+// r0 = data
 shift_out_32:
     ldr r3, =GP24_DATA  // data pin
     ldr r4, =GP29_CLK   // clock pin
@@ -320,13 +333,13 @@ check_spi_status:
     mov r4, #8      // try 6 and 7; 5 gives 0x30303030; 6 gives 0x18181818; 7 gives 0xc0c0c0c
 
 turn_loop:
-    str r3, [r1, #ASET]     // Clock High
+    str r3, [r1, #ASET] // Clock High
 
     mov r0, #10
 1:  sub r0, #1
     bne 1b
 
-    str r3, [r1, #ACLR]        // Clock Low
+    str r3, [r1, #ACLR] // Clock Low
 
     mov r0, #10
 2:  sub r0, #1
@@ -336,12 +349,12 @@ turn_loop:
     bne turn_loop
 
     // 4. Capture 32-bit Response
-    bl   shift_in_32           // Result in R0
+    bl   shift_in_32    // Result in R0
     
     // 5. Cleanup
-    str r2, [r1, #OE_SET]      // 0x24
+    str r2, [r1, #OE_SET]   // 0x24
     ldr r2, =GP25_CS
-    str r2, [r1, #ASET]        // CS High (Idle)
+    str r2, [r1, #ASET]     // CS High (Idle)
     pop {pc}
 
 check_spi_id:
