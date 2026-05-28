@@ -149,17 +149,6 @@ sync_thing:
     bl  check_spi_status
 
 check_r0_here:
-//    ldr r1, =SIO_BASE
-//    ldr r2, =GP25_CS
-//    str r2, [r1, #ACLR]     // CS low (0x18 is GPIO_OUT_CLR)
-//
-//    ldr r0, =0x0000b04c
-//    bl  shift_out_32
-//
-//    ldr r0, =0x000204b3
-//    bl  shift_out_32
-//
-//    str r2, [r1, #ASET]     // CS high (0x14 is GPIO_OUT_SET)
     bl  init_spi_config
 
 //    ldr r1, =SIO_BASE
