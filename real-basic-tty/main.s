@@ -48,12 +48,12 @@ main:
 
 led_loop:
     str     r1, [r0, #GPIO_OUT_SET] // ctrl bit goes to base GPIO address + 0x14: GPIO output set
-    ldr     r3, =big_num    // load countdown number
-    bl      delay           // branch to subroutine delay
+    mov     r2, #20         // load countdown number
+    bl      delay_nms       // branch to subroutine delay
 
     str     r1, [r0, #GPIO_OUT_CLR] // ctrl bit goes to base GPIO address + 0x18: GPIO output clear
-    ldr     r3, =bigr_num   // load countdown number
-    bl      delay           // branch to subroutine delay
+    ldr     r2, =300        // load countdown number
+    bl      delay_nms       // branch to subroutine delay
 
     ldr     r2, =something  // is something flag on?
     ldr     r3, [r2]        // capture the flag
