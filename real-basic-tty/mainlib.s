@@ -62,7 +62,7 @@ gpio_out_setup:
 .thumb_func
 .global delay_nms
 delay_nms:
-    ldr r3, =800000     // 0xc3500 for 1 ms
+    ldr r3, =42000      // 0xa410 for 1 ms?
 
 delay_n:
     sub r3, #1          // subtract 1 from register 3
@@ -77,7 +77,7 @@ delay_n:
 .thumb_func
 .global delay_1ms
 delay_1ms:
-    ldr r3, =800000     // 0xc3500 for 1 ms
+    ldr r3, =31250     // 0xa410 for 1 ms?
 
 .type delay, %function
 .thumb_func
