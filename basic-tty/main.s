@@ -47,11 +47,11 @@ main:
 .equ GPIO_OUT_CLR, 0x18
 
 led_loop:
-    str r1, [r0, #GPIO_OUT_SET] // 0x14 GPIO output value set
+    str r1, [r0, #GPIO_OUT_SET] // ctrl bit goes to base GPIO address + 0x14: GPIO output set
     ldr r3, =big_num    // load countdown number
     bl delay            // branch to subroutine delay
 
-    str r1, [r0, #GPIO_OUT_CLR] // 0x18 GPIO output value clear
+    str r1, [r0, #GPIO_OUT_CLR] // ctrl bit goes to base GPIO address + 0x18: GPIO output clear
     ldr r3, =bigr_num   // load countdown number
     bl delay            // branch to subroutine delay
 
@@ -64,9 +64,9 @@ do_something:
     mov r3, #0
     str r3, [r2]        // say nothing
 
-    push    {r0,r1}
-    bl      productive_stuff
-    pop     {r0,r1}
+    push    {r0,r1}     // save GPIO pointer, control bit for LED
+    bl      productive_stuff    // do wonderful things...
+    pop     {r0,r1}     // put the LED registers back
 
     mov r4, r0          // save sio_base into r4
     ldr r0, =prompt
@@ -92,15 +92,17 @@ do_something:
 //  r1 = control bit
 //-----------------------------------------------------------------------
 .equ GPIO_OE_SET,  0x24
-.equ GPIO_SIO_F,   5
+.equ GPIO_SIO_FN,  5
+.equ CTRL_OFFSET,  4
+
 gpio_out_setup:
     push {r2, r3}
 
-    ldr  r1, =ctrl_base  // 0x40014000 gpio
-    mov  r2, #GPIO_SIO_F // gpio control function 5: SIO
-    lsl  r3, r0, #3      // r3 = gpio# * 8 = status offset from *_base
-    add  r3, #4          // 4 = control register
-    str  r2, [r1, r3]    // SIO function to ctrl_base + offset
+    ldr  r1, =ctrl_base   // 0x40014000 gpio
+    mov  r2, #GPIO_SIO_FN // gpio control function 5: SIO
+    lsl  r3, r0, #3       // r3 = gpio# * 8 = status offset from ctrl_base
+    add  r3, #CTRL_OFFSET // 4 = control register
+    str  r2, [r1, r3]     // set SIO function in [ctrl_base + offset]
 
     mov  r1, #1          // output enable mask
     lsl  r1, r0          // mask by gpio#
