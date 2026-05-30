@@ -48,6 +48,6 @@ I'm a Mac guy, so I get to use vim, gdb, minicom, and ttys to get things done, a
 
   'show g' nn shows the configuration and status register for a given GPIO (0-31)
 
-**realbasic-tty** is a stripped-down version of **basic-tty** with all the dump and show routines in the archive directory, suitable for sample code.
+**real-basic-tty** is a stripped-down version of **basic-tty** with all the dump and show routines in the archive directory, suitable for sample code.
 
 Enjoy!
