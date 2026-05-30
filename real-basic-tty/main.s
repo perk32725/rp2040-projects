@@ -77,7 +77,11 @@ do_something:
 // do something interesting here:
 // -----------------------------------------------------------------------------
 productive_stuff:
-    bx      lr
+    push    {lr}
+    ldr     r0, =inpbuffer
+    ldr     r0, [r0]
+    bl      prt_string
+    pop     {pc}
 
 // -----------------------------------------------------------------------------
 // DATA
