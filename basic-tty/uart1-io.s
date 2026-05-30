@@ -60,6 +60,7 @@ uart_isr:
     cmp     r0, #8          // BS??
     bne     uart_chk_cr     // no...
 
+    // it's a backspace:
     sub     r2, #1          // r1 = inpptr
     str     r2, [r1]        // put it back
 
@@ -74,6 +75,7 @@ uart_chk_cr:
     cmp     r0, #0x0d       // CR?
     bne     add_char        // buffer the char and continue
     
+    // it's a CR:
     mov     r0, #0          // zero out ...
     strb    r0, [r2]        // ... the string
 
@@ -100,6 +102,9 @@ _uart_done:
 // uart_out()
 // entry: r0 = char to send
 //------------------------------------------
+.equ UART_FLAG, 0x18
+.equ UART_BUSY, 8
+.equ UART_TXFULL, 32
 .global uart_out
 .type uart_out, %function
 .thumb_func
@@ -109,11 +114,11 @@ uart_out:     // data out in r0
 
 uart_out_loop:  
     ldr r1, =uart1_rw   // base address for uart1 registers
-    ldr r2, [r1, #0x18] // read UART0 flag register UARTFR 4.2.8
-//    mov r3, #32         // mask for bit 5, TX FIFO full TXFF
-    mov r3, #8          // mask for bit 3, UART BUSY 
-    and r2, r3          // isolate bit 5
-    bne uart_out_loop   // if TX FIFO is full, go back and check again
+    ldr r2, [r1, #UART_FLAG] // read UART0 flag register UARTFR 4.2.8
+//    mov r3, #UART_TXFULL   // mask for bit 5, TX FIFO full TXFF
+    mov r3, #UART_BUSY  // mask for bit 3, UART BUSY 
+    and r2, r3          // isolate bit 5 or 3
+    bne uart_out_loop   // if uart busy or TX FIFO is full, go back and check again
 
     mov r2, #0xff       // bit mask for the 8 lowest bits
     and r0, r2          // get rid of all but the lowest 8 bits of data
@@ -131,21 +136,20 @@ uart_out_loop:
 .thumb_func
 
 prt_string:
-    push {r0,r1,r2,lr}
+    push {r0,r1,lr}
     mov  r1, r0             // put strptr in r1
-    mov  r2, #0xff          // mask
 
 str_loop:
     ldrb r0, [r1]
-    add  r1, #1
-    and  r0, r2
+    orr  r0, r0
     beq  str_done
 
     bl   uart_out
+    add  r1, #1
     b    str_loop
 
 str_done:
-    pop  {r0,r1,r2,pc}
+    pop  {r0,r1,pc}
 
 //-----------------------------------------------------------
 .section .uart_data, "a"
@@ -157,13 +161,13 @@ uart_data:
 // this is in RAM:
 .section .bss_uart, "aw", %nobits
 
-.global inpbuffer
-inpbuffer:  .skip  512  // space for input buffer (.skip fills with Zeros)
+.global something
+something:  .word    0  // say we should do something
 
 .global inpptr
 inpptr:     .word    0  // where we are in the buffer
 
-.global something
-something:  .word    0  // say we should do something
+.global inpbuffer
+inpbuffer:  .skip  512  // space for input buffer (.skip fills with Zeros)
 
 // EOF:
