@@ -78,9 +78,9 @@ do_something:
 // -----------------------------------------------------------------------------
 productive_stuff:
     push    {lr}
-    ldr     r0, =inpbuffer
-    ldr     r0, [r0]
-    bl      prt_string
+    ldr     r0, =inpptr     // get current input ptr
+    ldr     r0, [r0]        // point to where it is
+    bl      prt_string      // and print it
     pop     {pc}
 
 // -----------------------------------------------------------------------------
