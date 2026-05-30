@@ -73,6 +73,9 @@ do_something:
     pop     {r0,r1}         // put the LED registers back
     b       led_loop        // and loop
 
+// -----------------------------------------------------------------------------
+// do something interesting here:
+// -----------------------------------------------------------------------------
 productive_stuff:
     bx      lr
 
