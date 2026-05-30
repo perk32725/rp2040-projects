@@ -1,4 +1,10 @@
-// included by main.s
+.cpu cortex-m0plus
+.thumb
+
+.align 2
+.section .main.input, "ax"
+
+// WAS included by main.s
 // ************** input string routines ******************************
 //------------------------------------------
 // build_hex():
@@ -6,6 +12,9 @@
 // Exit:  r0 = binary value
 //        r1 = ??
 //------------------------------------------
+.type build_hex, %function
+.thumb_func
+.global build_hex
 build_hex:
     push    {r2,r3}
     mov     r3, #0      // the result
@@ -53,6 +62,9 @@ out_range:              // no more hex
 //  r0 = char, or 0 if not found
 //  r1 = addr of found char or the Zero
 //------------------------------------------------
+.type scan4chr, %function
+.thumb_func
+.global scan4chr
 scan4chr:
     push    {r2}
     mov     r2, r0      // stash char in r2
@@ -81,6 +93,9 @@ scan_done:
 //   r0 = char at [r1]
 //   r1 = after the 'x', or at the null terminator
 //------------------------------------------
+.type scan40x, %function
+.thumb_func
+.global scan40x
 scan40x:
     ldrb    r0, [r1]        // grab a char
 
@@ -107,6 +122,9 @@ scan40x_done:
 // Exit:  r0 = binary value
 //        r1 = at ![0..9]
 //------------------------------------------
+.type build_dec, %function
+.thumb_func
+.global build_dec
 build_dec:
     push    {r2,r3}
     mov     r3, #0     // init target

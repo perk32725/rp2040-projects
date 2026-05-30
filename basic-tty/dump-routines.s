@@ -1,4 +1,292 @@
-// included by main.s
+.cpu cortex-m0plus
+.thumb
+
+.align 2
+.section .main.input, "ax"
+
+// WAS included by main.s
+
+//----------------------------------------------
+// setup_r1r2():
+// entry:
+//   inpbuffer = 'hd 0xxxxxxxxx nnn...
+// calls:
+//   scan40x
+//   build_hex
+//   build_dec
+// exit:
+//   r1 = given start address or 0 if '0x' not found
+//   r2 = given count
+//----------------------------------------------
+setup_r1r2:
+    push {lr}
+    ldr  r1, =inpbuffer
+    bl   scan40x
+    orr  r0, r0
+    beq  r1r2_done
+
+r1r2_1:
+    bl   build_hex  // build the hex address
+    push {r0}       // save the address
+    add  r1, #1     // move up
+
+    // build the decimal count:
+    bl   build_dec
+    orr  r0, r0     // check result
+    bne  r1r2_nz    // we have a limit
+    mov  r0, #16    // set a limit
+
+r1r2_nz:
+    mov  r2, r0     // put count in r2 for dump_
+    pop  {r1}       // addr ptr in r1, count in r2
+
+r1r2_done:
+    pop  {pc}
+
+//-----------------------------------------
+// hexdumpw(): wrapper for dump_words()
+//-----------------------------------------
+hexdumpw:
+    ldr r0, =hexw_msg
+    bl  prt_string      // say 'hex dump words:'
+    bl  setup_r1r2      // returns address in r1, count in r2
+    bl  dump_words      // then dump 32-bit words
+    b   hex_done
+
+//-----------------------------------------
+// hexdumpi(): wrapper for dump_ints()
+//-----------------------------------------
+hexdumpi:
+    ldr r0, =hexi_msg
+    bl  prt_string      // say 'hex dump words:'
+    bl  setup_r1r2      // returns address in r1, count in r2
+    bl  dump_ints       // dump 16-bit ints
+    b   hex_done
+
+//-----------------------------------------
+// hexdumpb(): wrapper for dump_bytes()
+//-----------------------------------------
+hexdumpb:
+    ldr r0, =hexb_msg
+    bl  prt_string      // say 'hex dump bytes:'
+    bl  setup_r1r2      // returns address in r1, count in r2
+
+    mov r0, r1          // do a prt_reg here because dump_bytes is complex
+    bl  prt_reg         // print the address
+    bl  dump_bytes      // dump bytes
+
+//-----------------------------------------
+// hex_done: common exit point
+//-----------------------------------------
+hex_done:
+    pop {r0-r2,pc}      // done
+
+.ltorg                  // stash nearby data here
+
+//----------------------------------------------
+// productive_stuff:
+// entry: r0, r1 already saved
+//----------------------------------------------
+.type productive_stuff, %function
+.thumb_func
+.global productive_stuff
+productive_stuff:
+// look at the first 4 bytes in inpbuffer, see if we can make something of them:
+    push {r0-r2,lr}
+
+    ldr  r1, =inpbuffer
+    ldr  r0, [r1]
+
+    // see if user wants to dump some memory:
+    ldr  r2, =dw_0       // 'dw 0'
+    cmp  r0, r2          // r0 == 'dw 0'?
+    beq  hexdumpw        // goto hexdump words
+
+    ldr  r2, =di_0       // 'di 0'
+    cmp  r0, r2          // r0 == 'di 0'?
+    beq  hexdumpi        // goto hexdump ints
+
+    ldr  r2, =db_0       // 'db 0'
+    cmp  r0, r2          // r0 == 'db 0'?
+    beq  hexdumpb        // goto hexdump bytes
+
+    // look for other commands:
+    // show command
+
+    ldr  r2, =show      // did they say show something?
+    cmp  r0, r2
+    bne  skip_show      // if not...
+
+    // move up to next word (right after the 'w')
+    // and see what else we have
+    // show-io: show IO port statuses
+    // show-tmp: show CPU temperature
+    // show-cfg: show system config
+
+    add  r1, #4
+    ldrb r0, [r1]   // grab the next char
+    add  r1, #1     // and move up
+    cmp  r0, #' '   // space?
+    bne  to_nullpgm // wasn't a space ...
+
+skip_space:
+    ldrb r0, [r1]   // grab next char
+    add  r1, #1     // and move up
+    cmp  r0, #' '   // another space?
+    beq  skip_space
+
+    cmp  r0, #'s'
+    beq  show_sys   // show sys
+
+    cmp  r0, #'c'
+    beq  show_cfg   // show cfg
+
+    cmp  r0, #'g'
+    beq  show_gpio  // show gpio
+
+to_nullpgm:
+    b    null_pgm   // show error
+
+.ltorg
+
+show_sys:   // show_sys: show sysinfo stuff
+    ldr  r1, =sysinfo_base
+
+    ldr  r0, =sysinfo_msg1
+    bl   prt_string // say 'CHIP_ID: '
+
+    ldr  r0, [r1, #0] //#SYSINFO_CHIP_ID_OFFSET]
+    bl   hexoutw
+
+    ldr  r0, =sysinfo_msg2
+    bl   prt_string // say 'PLATFORM: ' on a new line
+
+    ldr r0, [r1, #4] //#SYSINFO_CHIP_ID_OFFSET]
+    bl  hexoutw
+
+    ldr r0, =sysinfo_msg3
+    bl  prt_string  // say 'GITREF_RP2040: '
+
+    ldr r0, [r1, #0x40] //#SYSINFO_PLATFORM_OFFSET]
+    bl  hexoutw
+
+    mov r0, #0x0a
+    bl  uart_out
+    b   hex_done
+
+.ltorg
+
+show_cfg:           // show_cfg: show something of the system configuration
+    ldr  r1, =syscfg_base
+    ldr  r0, =syscfg_msg1
+    bl   prt_string // say 'PROC0_NMI'
+    ldr  r0, [r1,#0]
+    bl   hexoutw
+    
+    ldr  r0, =syscfg_msg2
+    bl   prt_string // say 'PROC1_NMI'
+    ldr  r0, [r1,#4]
+    bl   hexoutw
+
+    ldr  r0, =syscfg_msg3
+    bl   prt_string // say 'PROC_CONFIG'
+    ldr  r0, [r1,#8]
+    bl   hexoutw
+
+    ldr  r0, =syscfg_msg4
+    bl   prt_string // say 'PROC_IN_SYNC_BYPASS'
+    ldr  r0, [r1,#0x0C]
+    bl   hexoutw
+
+    ldr  r0, =syscfg_msg5
+    bl   prt_string // say 'PROC_IN_SYNC_BYPASS_HI'
+    ldr  r0, [r1,#0x10]
+    bl   hexoutw
+
+    ldr  r0, =syscfg_msg6
+    bl   prt_string // say 'DBGFORCE'
+    ldr  r0, [r1,#0x14]
+    bl   hexoutw
+
+    ldr  r0, =syscfg_msg7
+    bl   prt_string // say 'MEMPOWERDOWN'
+    ldr  r0, [r1,#0x18]
+    bl   hexoutw
+
+    mov  r0, #0x0a
+    bl   uart_out
+    b    hex_done
+
+.ltorg
+
+skip_show:          // so we can find null_pgm
+    b   null_pgm
+
+show_gpio:          // show gpio status and control: show g[pio] 0-29
+    // we got a 'g'; scan until we get a space, then scan until we don't get a space
+    ldrb r0, [r1]   // grab next char
+    add  r1, #1     // and move up
+    orr  r0, r0     // end?
+    beq  skip_show  // oops
+
+    cmp  r0, #' '   // space?
+    bne  show_gpio  // scan to space
+
+g_gotspace:
+    ldrb r0, [r1]
+    add  r1, #1
+    orr  r0, r0
+    beq  skip_show
+
+    cmp  r0, #' '
+    beq  g_gotspace
+
+    sub  r1, #1     // move back a trifle
+    bl   build_dec  // returns r0=decimal number, r1=char after number
+    mov  r2, r0     // put the register # in r2 for later
+
+    cmp  r2, #30    // 0-29 only
+    bge  skip_show
+
+    ldr  r0, =gpio_msg
+    bl   prt_string // say 'status   control'
+
+    ldr  r1, =ctrl_base
+    lsl  r2, #3     // skip 8 bytes per n
+
+    ldr  r0, [r1, r2]
+    bl   hexoutw    // display what we have
+
+    mov  r0, #' '
+    bl   uart_out
+
+    add  r1, #4     // goto control register
+    ldr  r0, [r1, r2]
+    bl   hexoutw    // display what we have
+    
+    mov  r0, #0x0a  // NL
+    bl   uart_out
+
+    sub  r1, #4     // back to status register
+    ldr  r0, [r1, r2]
+    bl   show_stat_reg
+
+    add  r1, #4
+    ldr  r0, [r1, r2]
+    bl   show_ctrl_reg
+
+    b   hex_done
+
+    // if nothing computes, print an error message
+    // and go back to the shadows again...
+null_pgm:
+    ldr r0, =do_something_msg
+    bl  prt_string      // ... error ...
+    ldr r0, =menu
+    bl  prt_string
+    b   hex_done        // done
+
+.ltorg
 
 // ************** subroutines and productive stuff ******************
 //------------------------------------------
@@ -56,43 +344,6 @@ ca_err:
 
 ca_done:
     pop     {r1-r4,pc}     // done
-
-//----------------------------------------------
-// setup_r1r2():
-// entry:
-//   inpbuffer = 'hd 0xxxxxxxxx nnn...
-// calls:
-//   scan40x
-//   build_hex
-//   build_dec
-// exit:
-//   r1 = given start address or 0 if '0x' not found
-//   r2 = given count
-//----------------------------------------------
-setup_r1r2:
-    push {lr}
-    ldr  r1, =inpbuffer
-    bl   scan40x
-    orr  r0, r0
-    beq  r1r2_done
-
-r1r2_1:
-    bl   build_hex  // build the hex address
-    push {r0}       // save the address
-    add  r1, #1     // move up
-
-    // build the decimal count:
-    bl   build_dec
-    orr  r0, r0     // check result
-    bne  r1r2_nz    // we have a limit
-    mov  r0, #16    // set a limit
-
-r1r2_nz:
-    mov  r2, r0     // put count in r2 for dump_
-    pop  {r1}       // addr ptr in r1, count in r2
-
-r1r2_done:
-    pop  {pc}
 
 //------------------------------------------------
 // dump_words()
@@ -323,7 +574,7 @@ prt_reg:
 //------------------------------------------
 .type hexoutw, %function
 .thumb_func
-
+.global hexoutw
 hexoutw:
     push    {r0-r1,lr}
     mov     r1, r0      // save
@@ -502,5 +753,62 @@ revloop:
     bpl     revloop     // swap some more
 
     pop     {r1,r4,r6,r7,pc}
+
+// -----------------------------------------------------------------------------
+// DATA
+// -----------------------------------------------------------------------------
+
+.align 2
+
+defined_data:
+.equ big_num,       0x000f0000  // large number for the delay loop
+.equ bigr_num,      0x00800000  // larger number for the delay loop
+.equ sysinfo_base,  0x40000000  // SYSINFO_BASE 2.20
+.equ syscfg_base,   0x40004000  // SYSCFG_BASE 2.21
+.equ ctrl_base,     0x40014000  // GPIO04_CTRL 2.19.6.1
+.equ sio_base,      0xd0000000  // SIO base 2.3.1.7
+
+.equ dw_0,          0x30207764  // 'dw 0'
+.equ di_0,          0x30206964  // 'di 0'
+.equ db_0,          0x30206264  // 'db 0'
+.equ show,          0x776f6873  // 'show'
+
+.section .rodata
+memmap:           .word 0x00000000,0x00003fff   // ROM
+                  .word 0x10000000,0x10ffffff   // XIP flash
+                  .word 0x20000000,0x2003ffff   // SRAM
+                  .word 0x20040000,0x20041fff   // scratch space
+                  .word 0x40000000,0x4fffffff   // peripherals
+                  .word 0x50000000,0x50ffffff   // PIO/DMA
+                  .word 0xd0000000,0xdfffffff   // SIO space
+                  .word 0xe0000000,0xe00fffff   // PPB(System)
+
+hello_world:      .asciz "\nHello World!"
+prompt:           .asciz "\n>_\b"
+do_something_msg: .asciz "\nDon't just do something, stand there!\n"
+menu:             .asciz "menu:\ndw addr count, di addr count, db addr count,\nshow sys, show cfg, show gpio nn, \n"
+gpio_msg:         .asciz "status   control\n"
+hexw_msg:         .asciz "hex dump words:\n"
+hexi_msg:         .asciz "hex dump ints:\n"
+hexb_msg:         .asciz "hex dump bytes:\n"
+outrange_msg:     .asciz ": out of range\n"
+sysinfo_msg1:     .asciz "CHIP_ID: "
+sysinfo_msg2:     .asciz "\nPLATFORM: "
+sysinfo_msg3:     .asciz "\nGITREF_RP2040: "
+hexscii_msg:      .asciz "|................|\n"
+
+syscfg_msg1:      .asciz "PROC0_NMI: "
+syscfg_msg2:      .asciz "\nPROC1_NMI: "
+syscfg_msg3:      .asciz "\nPROC_CONFIG: "
+syscfg_msg4:      .asciz "\nPROC_IN_SYNC_BYPASS: "
+syscfg_msg5:      .asciz "\nPROC_IN_SYNC_BYPASS_HI: "
+syscfg_msg6:      .asciz "\nDBGFORCE: "
+syscfg_msg7:      .asciz "\nMEMPOWERDOWN: "
+
+.align 4    // balance out the data
+
+// this is in RAM:
+.section .bss_main, "aw", %nobits
+hexscii_:   .skip   20  // space for hexscii_output: '|...|\n\0'
 
 // EOF:

@@ -17,8 +17,20 @@ LFLAGS= -nostdlib -T main.ld  -Wl,--just-symbols=../basic-runtime/basic-runtime.
 #all: main0.elf main1.elf
 all: main.elf
 
-main.o: main.s dump-routines.s input-routines.s
+main.o: main.s
 	$(CC) $(CFLAGS) -o $@ main.s
+
+mainlib.o: mainlib.s
+	$(CC) $(CFLAGS) -o $@ mainlib.s
+
+dump-routines.o: dump-routines.s
+	$(CC) $(CFLAGS) -o $@ dump-routines.s
+
+input-routines.o: input-routines.s
+	$(CC) $(CFLAGS) -o $@ input-routines.s
+
+show-routines.o: show-routines.s
+	$(CC) $(CFLAGS) -o $@ show-routines.s
 
 # --- choose uart0-io or uart1-io for use with main:
 uart0-io.o: uart0-io.s
@@ -28,7 +40,7 @@ uart0-io.o: uart0-io.s
 #	$(CC) $(CFLAGS) -o $@ $^
 
 # --- main:
-main.elf: main.o uart0-io.o
+main.elf: main.o mainlib.o dump-routines.o input-routines.o show-routines.o uart0-io.o
 	$(CC) $(LFLAGS) -o $@ $^
 	$(DIS) -D main.elf >main.dis
 
