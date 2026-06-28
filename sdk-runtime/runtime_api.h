@@ -257,23 +257,23 @@ extern void     FLASH_FUNC runtime_lwip_end(void);
 // Note: We use uint32_t/int32_t to match the CPU registers
 
 // Integer Division & Modulo
-extern uint32_t FLASH_FUNC __aeabi_uidiv(uint32_t n, uint32_t d);    // n / d (unsigned)
-extern int32_t  FLASH_FUNC __aeabi_idiv(int32_t n, int32_t d);      // n / d (signed)
-extern uint64_t FLASH_FUNC __aeabi_uidivmod(uint32_t n, uint32_t d); // n % d (unsigned)
-extern int64_t  FLASH_FUNC __aeabi_idivmod(int32_t n, int32_t d);   // n % d (signed)
+extern uint32_t FLASH_FUNC __aeabi_uidiv(uint32_t n, uint32_t d);       // n / d (unsigned)
+extern int32_t  FLASH_FUNC __aeabi_idiv(int32_t n, int32_t d);          // n / d (signed)
+extern uint64_t FLASH_FUNC __aeabi_uidivmod(uint32_t n, uint32_t d);    // n % d (unsigned)
+extern int64_t  FLASH_FUNC __aeabi_idivmod(int32_t n, int32_t d);       // n % d (signed)
 
 // 64-bit Integer (Long Long)
-extern uint64_t FLASH_FUNC __aeabi_uldivmod(uint64_t n, uint64_t d); // 64-bit n % d
-extern uint64_t FLASH_FUNC __aeabi_llsl(uint64_t val, int shift);    // 64-bit <<
-extern uint64_t FLASH_FUNC __aeabi_llsr(uint64_t val, int shift);    // 64-bit >>
+extern uint64_t FLASH_FUNC __aeabi_uldivmod(uint64_t n, uint64_t d);    // 64-bit n % d
+extern uint64_t FLASH_FUNC __aeabi_llsl(uint64_t val, int shift);       // 64-bit <<
+extern uint64_t FLASH_FUNC __aeabi_llsr(uint64_t val, int shift);       // 64-bit >>
 
 // Single Precision Floating Point (float)
 extern float    FLASH_FUNC __aeabi_fadd(float a, float b);
 extern float    FLASH_FUNC __aeabi_fsub(float a, float b);
 extern float    FLASH_FUNC __aeabi_fmul(float a, float b);
 extern float    FLASH_FUNC __aeabi_fdiv(float a, float b);
-extern float    FLASH_FUNC __aeabi_i2f(int32_t i);                   // int to float
-extern int32_t  FLASH_FUNC __aeabi_f2iz(float f);                  // float to int
+extern float    FLASH_FUNC __aeabi_i2f(int32_t i);          // int to float
+extern int32_t  FLASH_FUNC __aeabi_f2iz(float f);           // float to int
 
 // Optimized Memory Blocks
 extern void     FLASH_FUNC __aeabi_memcpy(void *dest, const void *src, size_t n);
