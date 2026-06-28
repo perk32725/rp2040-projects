@@ -37,7 +37,7 @@ struct ip_addr;
 #endif
 
 extern void my_asm();
-extern void my_c_function(void);
+extern void my_c_function(void);    // resides in other.c
 
 void trigger_ntp_sync(const char* server_ip_str);
 
