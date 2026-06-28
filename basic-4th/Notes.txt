@@ -1,0 +1,178 @@
+9a^2 - ba:
+:2c6 ( a b -- result) over 9 * swap - * ;
+over: a b a
+9:    a b a 9
+*:    a b (9a)
+swap: a (9a) b
+-:    a (9a - b)
+*:    (9aa - ab)
+
+a = 1, b = 2:
+over 9: 1 2 1 9
+*:      1 2 9
+swap:   1 9 2
+-:      1 7
+*:      7
+
+a = 3, b = 2:
+over 9: 3 2 3 9
+*:      3 2 27
+swap:   3 27 2
+-:      3 25
+*:      75
+
+factor the equation 9a^2 - ba:
+a(9a - b)
+
+program 9a - b
+mulitply result by a
+
+my understanding was:
+over  a b a
+dup   a b a a
+*     a b (a^2)
+9 *   a b (9a^2)
+rot   b (9a^2) a
+rot   (9a^2) a b
+*     (9a^2) (ab)
+swap  (ab) (9a^2)
+-     (9a^2 - ab)
+
+###
+A Handy Hint
+A Non-destructive Stack Print
+Beginners who are just learning to manipulate numbers on the stack
+in useful ways very often find themselves typing a series of dots
+to see what's on the stack after their manipulations. The problem
+with dots, though, is that they don't leave the numbers on the stack
+for future manipulations.
+
+Here is the definition
+.S prints out all the values that happen to be on the stack
+"non-destructively"; that is, without removing them. Type the
+definition in as shown here, and don't worry about how it works.
+
+: .S CR 'S SO @ 2- DO I @ . -2 +LOOP ;
+
+Let's test it, first with nothing on the stack:
+.s
+0 Ok
+
+As you can see, in this version of .s, we always see at least one
+number as a reference for the bottom of the stack; that is, the
+same number we see when we type a '.' and get
+.<return> 0 . STACK EMPTY
+
+Now let's try it with numbers on the stack:
+1 2 3 .s
+0 1 2 3 ok
+ROT .S
+0 2 3 1 ok
+
+
+###
+A Handy Hint - When a Block Won't LOAD
+On some FORTH systems, the following scenario may sometimes happen
+to you: you load some new definitions from a block, but when you
+try to execute them, FORTHdoesn't seem to have ever heard of them
+(responding with a "?").
+
+First you want to check whether any or all of your definitions were
+actually compiled into the dictionary. To do this, enter an apostrophe
+followed by a space, then the name of the word, then a '.',as in
+
+' THINGAMAJIG .<return>
+
+If '.' prints a number, then the definition is compiled, but if FORTH responds
+THINGAMAJIG?
+then it isn't.
+
+There are two possible reasons for part of a block not getting
+compiled:
+
+1) You made a typing error that keeps FORTH from being able to
+recognize a word. For instance, you may have typed
+(COMMENTLINE)
+without a space after '('.
+This type of error is easy to find and correct because FORTH prints
+the name of any word it doesn't understand, like this:
+180 LOAD<return> (COMMENT?
+
+2) There is a non-printing character (one you can't see) somewhere
+in the block. To find a non-printing character, enter this:
+0 T <return>
+1 T <return>
+2 T <return>
+
+If a line contains any non-printing characters, the "ok" at the end
+of the line will not line up with the "ok"s at the ends of the other
+lines, because non-printing characters don't print spaces. For any
+such line, reenter the entire line (using 'P').
+
+##
+A Handy Hint
+A Better Non-destructive Stack Print
+Now that you know how to load longer definitions from a disk block,
+heres' an improved version of .S which displays the contents of the stack non-destructively without displaying the 'stack-empty' number.
+
+This version uses an addition word called DEPTH, which returns the number of values on the stack (follow it with '.'.)
+
+If you're a beginner, you might wnt to enter these two definisitiaons instoa a special block
+
+0 NON-DESTRUCTIVE STACK PRINT)
+1
+2 : DEPTH S0 @ 'S - 2/ 2- ;
+3 : .S CR DEPTH IF
+4   'S S0 @ 4 -   DO I @ . -2 +LOOP
+5     ELSE ." Empty " THEN ;
+6
+7
+
+##
+Other stack operations (from 'the philosphy of fixed point' in Starting Forth)
+>R (n -- ) "to-R":    takes a value off the stack and puts it on the return stack
+R> ( -- n) "R-from":  takes a value off the return stack and puts it on the stack
+I  ( -- n) "I":       copies the top of the return stack to the stack
+I' ( -- n) "I-prime": copies the second item of the return stack to the stack
+J  ( -- n) "J":       copies the third item of the return stack to the stack
+
+' tick- puts address of dictionary definition on the stack
+' xxx ( -- adr) 
+in a definition, use ['] to grab the following address
+['] compile time: ( -- )
+    run time:     ( -- adr)
+
+: coming ['] hello 'aloha ! ;
+: going  ['] goodbye 'aloha ! ;
+
+! (n adr -- ) 'store': stores 16 bit number into adr
+@ (adr -- n)  'fetch': replaces adr with it's contents
+? (adr -- )   'question': prints contents of adr followed by a space
+, (n -- ) 'comma': compiles n into the next cell in the dictionary
++! (n adr -- ) 'plus-store': adds n to contents of adr
+allot (n -- ) adds n byts to the parameter field of most recently defined word
+C! (b adr -- ) 'c-store': stores 8-bit value
+C@ (adr -- b)  'c-fetch': fetches 8-bit value
+FILL (adr n b -- ) fills n bytes at adr with value b
+BASE (n -- ) system number base
+
+H is where we next compile to in the dictionary
+: HERE H @ ;
+: , HERE ! 2 ALLOT ;
+
+Determine space used by a definition:
+HERE 220 LOAD HERE SWAP - . ( will show how much space is used by disk block 220)
+
+'S @ gives the address of the stack
+S0 points to the bottom of the stack
+
+# Defining words:
+:
+variable
+2variable
+constant
+2constant
+create
+user
+
+# EOF:
