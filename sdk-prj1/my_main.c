@@ -148,7 +148,6 @@ void __attribute__((section(".entry_point"))) my_main() {
         fflush(get_stdout());
         counter = 3;
     }
-
 }
 
 // NTP Epoch (1900) to Unix Epoch (1970) difference
