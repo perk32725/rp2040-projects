@@ -39,9 +39,9 @@ struct ip_addr;
 extern void my_asm();
 extern void my_c_function(void);    // resides in other.c
 
-void trigger_ntp_sync(const char* server_ip_str);
+void trigger_ntp_sync(const char * server_ip_str);
 
-void fill_date_from_unix(uint32_t unix_time, datetime_t *t);
+void fill_date_from_unix(uint32_t unix_time, datetime_t * t);
 
 #define NTP_MSG_LEN 48
 uint8_t  udp_buffer[NTP_MSG_LEN] = {0};
@@ -72,6 +72,7 @@ void __attribute__((section(".entry_point"))) my_main() {
         char ip[16], mask[16], gw[16];
 
         sleep_ms(100);
+
         // Get IP Info using your previously made wrapper
         runtime_get_ip_info(ip, mask, gw);
 
@@ -212,7 +213,7 @@ void trigger_ntp_sync(const char* server_ip_str) {
 }
 
 //-------------------------------------------------------------
-void fill_date_from_unix(uint32_t unix_time, datetime_t *t) {
+void fill_date_from_unix(uint32_t unix_time, datetime_t * t) {
     // Days since Jan 1, 1970
     uint32_t days = unix_time / 86400;
 
