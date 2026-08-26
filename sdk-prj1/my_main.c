@@ -51,19 +51,21 @@ uint32_t unix_time;
 // my_main()
 //------------------------------------------------------------
 void __attribute__((section(".entry_point"))) my_main() {
-    printf("Connecting...\n");
+
+    // network connect:
+    printf("Connecting to network...\n");
     runtime_cyw43_arch_init();
-    hci_power_control(HCI_POWER_ON);
+    hci_power_control(HCI_POWER_ON);    // powered on, but not off?
+
     runtime_ble_scan_start();
     runtime_wifi_connect_async("<your-wifi>","<your password>");
 
-    uint32_t x;
     while(runtime_get_link_status() != 3) {
         printf("status: %d\n", runtime_get_link_status());
         sleep_ms(3000);
     }
 
-    printf("\nConnected\n\n");
+    printf("\nConnected!\n\n");
     fflush(get_stdout());
 
     if (runtime_get_link_status() == 3) {
@@ -95,16 +97,17 @@ void __attribute__((section(".entry_point"))) my_main() {
         fflush(get_stdout());
     }
 
-    // init:
+    // set up timekeeping:
     uint32_t seconds_today;
     datetime_t now;
 
     rtc_init();
 
-    // trigger:
+    // sync with a handy NTP server:
     trigger_ntp_sync("162.159.200.1");
     sleep_ms(200);
 
+    // assume it worked:
     seconds_today = unix_time % 86400;
     now.hour = (seconds_today / 3600);
     now.min  = (seconds_today % 3600) / 60;
@@ -119,21 +122,25 @@ void __attribute__((section(".entry_point"))) my_main() {
     printf("Current date: %04d-%02d-%02D\n", now.year, now.month, now.day);
     printf("Current time: %02d:%02d:%02d\n", now.hour, now.min, now.sec);
 
+    // if we don't need the network connection on all the time:
     printf("\nnetwork disconnect\n");
     runtime_network_soft_reset();
     fflush(get_stdout());
 
+    // the "Forever" loop:
     printf("\nFlashing...\n");
     int counter = 3;
     while (true) {
         my_asm();
         my_c_function();
 
+        // LED On:
         runtime_lwip_begin();
         runtime_cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 1);
         runtime_lwip_end();
         sleep_ms(25);
 
+        // LED Off:
         runtime_lwip_begin();
         runtime_cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
         runtime_lwip_end();
@@ -143,6 +150,7 @@ void __attribute__((section(".entry_point"))) my_main() {
         if (counter)
             continue;
 
+        // about every second:
         rtc_get_datetime(&now);
         printf("Current time: %04d-%02d-%02d %02d:%02d:%02d\r", 
                 now.year, now.month, now.day, now.hour, now.min, now.sec);
@@ -152,13 +160,13 @@ void __attribute__((section(".entry_point"))) my_main() {
 }
 
 // NTP Epoch (1900) to Unix Epoch (1970) difference
-// UDP callback: Handles the packet coming back from the NTP server
-
-#define NTP_PORT 123
 #define NTP_DELTA 2208988800ull // Seconds between 1900 and 1970
 
-//-------------------------------------------------------------
-// --- The "Ear": Callback triggered when the server responds ---
+// UDP callback: Handles the packet coming back from the NTP server
+#define NTP_PORT 123
+//---------------------------------------------------------------
+// --- The "Ear": Callback triggered when the server responds
+//---------------------------------------------------------------
 static void ntp_recv_callback(void *arg, void *pcb, void *p, const void *addr, uint16_t port) {
     if (!p) return;
 
@@ -182,12 +190,13 @@ static void ntp_recv_callback(void *arg, void *pcb, void *p, const void *addr, u
 }
 
 //-------------------------------------------------------------
-// --- The "Voice": Function to send the request ---
+// --- The "Voice": set callback function, send the request
+//-------------------------------------------------------------
 void trigger_ntp_sync(const char* server_ip_str) {
     ip_addr_t server_addr;
     ip4addr_aton(server_ip_str, &server_addr);
 
-    // 1. Setup the listener
+    // 1. Setup the callback function:
     void* pcb = udp_new();
     udp_recv(pcb, ntp_recv_callback, NULL);
 
@@ -212,6 +221,8 @@ void trigger_ntp_sync(const char* server_ip_str) {
     }
 }
 
+//-------------------------------------------------------------
+// --- function:
 //-------------------------------------------------------------
 void fill_date_from_unix(uint32_t unix_time, datetime_t * t) {
     // Days since Jan 1, 1970
